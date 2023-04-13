@@ -177,6 +177,13 @@ void ArmorProcessorNode::armorsCallback(
     }
   }
 
+  if (armors_msg->armors[0].armor_type == 0) {
+    target_msg.armor_type = 0;
+  } else if (armors_msg->armors[0].armor_type ==1) {
+    target_msg.armor_type = 1;
+  }
+  
+
   last_time_ = time;
 
   const auto state = tracker_->target_state;
@@ -211,7 +218,7 @@ void ArmorProcessorNode::publishMarkers(const auto_aim_interfaces::msg::Target &
     position_marker_.action = visualization_msgs::msg::Marker::ADD;
     position_marker_.pose.position.x = xc;
     position_marker_.pose.position.y = yc;
-    position_marker_.pose.position.z = (zc + z2) / 2;
+    position_marker_.pose.position.z = target_msg.armor_type == 0 ? (zc + z2) / 2 : zc / 2;
 
     linear_v_marker_.action = visualization_msgs::msg::Marker::ADD;
     linear_v_marker_.points.clear();
@@ -232,16 +239,37 @@ void ArmorProcessorNode::publishMarkers(const auto_aim_interfaces::msg::Target &
     armors_marker_.action = visualization_msgs::msg::Marker::ADD;
     armors_marker_.points.clear();
     geometry_msgs::msg::Point p_a;
-    bool use_1 = true;
-    for (size_t i = 0; i < 4; i++) {
-      double tmp_yaw = yaw + i * M_PI_2;
-      double r = use_1 ? r1 : r2;
-      p_a.x = xc - r * cos(tmp_yaw);
-      p_a.y = yc - r * sin(tmp_yaw);
-      p_a.z = use_1 ? zc : z2;
-      armors_marker_.points.emplace_back(p_a);
-      use_1 = !use_1;
+    if (target_msg.armor_type == 0) {
+      bool use_1 = true;
+      for (size_t i = 0; i < 4; i++) {
+        double tmp_yaw = yaw + i * M_PI_2;
+        double r = use_1 ? r1 : r2;
+        p_a.x = xc - r * cos(tmp_yaw);
+        p_a.y = yc - r * sin(tmp_yaw);
+        p_a.z = use_1 ? zc : z2;
+        armors_marker_.points.emplace_back(p_a);
+        use_1 = !use_1;
+      }
+    } else if (target_msg.armor_type == 1) {
+      for (size_t i = 0; i < 4; i++) {
+        double tmp_yaw = yaw + i * M_PI_2;
+        double r = r1;
+        p_a.x = xc - r * cos(tmp_yaw);
+        p_a.y = yc - r * sin(tmp_yaw);
+        p_a.z = zc;
+        armors_marker_.points.emplace_back(p_a);
+      }
     }
+    // bool use_1 = true;
+    // for (size_t i = 0; i < 4; i++) {
+    //   double tmp_yaw = yaw + i * M_PI_2;
+    //   double r = use_1 ? r1 : r2;
+    //   p_a.x = xc - r * cos(tmp_yaw);
+    //   p_a.y = yc - r * sin(tmp_yaw);
+    //   p_a.z = use_1 ? zc : z2;
+    //   armors_marker_.points.emplace_back(p_a);
+    //   use_1 = !use_1;
+    // }
   } else {
     position_marker_.action = visualization_msgs::msg::Marker::DELETE;
     linear_v_marker_.action = visualization_msgs::msg::Marker::DELETE;

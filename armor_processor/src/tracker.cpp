@@ -158,12 +158,14 @@ void Tracker::handleArmorJump(const Armor & a)
 {
   double last_yaw = target_state(3);
   double yaw = orientationToYaw(a.pose.orientation);
-
+  // when armor is large, the value is not sure equal to 0.4
   if (abs(yaw - last_yaw) > 0.4) {
-    last_z = target_state(2);
+    if (a.armor_type == 0) {
+      last_z = target_state(2);
+      std::swap(target_state(8), last_r);
+    }
     target_state(2) = a.pose.position.z;
     target_state(3) = yaw;
-    std::swap(target_state(8), last_r);
     RCLCPP_WARN(rclcpp::get_logger("armor_processor"), "Armor jump!");
   }
 
